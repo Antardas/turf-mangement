@@ -23,16 +23,28 @@ export default function FieldsPage() {
 					.select("*, locations(*)")
 					.order("created_at", { ascending: false });
 
-				if (error) throw error;
-				setFields(data || []);
+				if (error) {
+					console.error("Error fetching fields:", error);
+					setFields([]);
+				} else {
+					setFields(data || []);
+				}
 			} catch (error) {
 				console.error("Error fetching fields:", error);
+				setFields([]);
 			} finally {
 				setLoading(false);
 			}
 		};
 
+		// Add timeout to prevent infinite loading
+		const timeoutId = setTimeout(() => {
+			setLoading(false);
+		}, 5000);
+
 		fetchFields();
+
+		return () => clearTimeout(timeoutId);
 	}, []);
 
 	const filteredFields = fields.filter((field) => {

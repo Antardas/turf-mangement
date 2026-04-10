@@ -37,16 +37,28 @@ export default function BookingsPage() {
 					.select("*, turf_fields(*), users(*)")
 					.order("start_time", { ascending: false });
 
-				if (error) throw error;
-				setBookings(data || []);
+				if (error) {
+					console.error("Error fetching bookings:", error);
+					setBookings([]);
+				} else {
+					setBookings(data || []);
+				}
 			} catch (error) {
 				console.error("Error fetching bookings:", error);
+				setBookings([]);
 			} finally {
 				setLoading(false);
 			}
 		};
 
+		// Add timeout to prevent infinite loading
+		const timeoutId = setTimeout(() => {
+			setLoading(false);
+		}, 5000);
+
 		fetchBookings();
+
+		return () => clearTimeout(timeoutId);
 	}, []);
 
 	const filteredBookings = bookings.filter((booking) => {

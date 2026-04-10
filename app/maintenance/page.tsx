@@ -45,16 +45,28 @@ export default function MaintenancePage() {
 					.select("*, turf_fields(*), users(*)")
 					.order("scheduled_date", { ascending: true });
 
-				if (error) throw error;
-				setTasks(data || []);
+				if (error) {
+					console.error("Error fetching maintenance tasks:", error);
+					setTasks([]);
+				} else {
+					setTasks(data || []);
+				}
 			} catch (error) {
 				console.error("Error fetching maintenance tasks:", error);
+				setTasks([]);
 			} finally {
 				setLoading(false);
 			}
 		};
 
+		// Add timeout to prevent infinite loading
+		const timeoutId = setTimeout(() => {
+			setLoading(false);
+		}, 5000);
+
 		fetchTasks();
+
+		return () => clearTimeout(timeoutId);
 	}, []);
 
 	const filteredTasks = tasks.filter((task) => {
@@ -73,8 +85,8 @@ export default function MaintenancePage() {
 			case "scheduled":
 				return (
 					<span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isOverdue
-							? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-							: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+						? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+						: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
 						}`}>
 						{isOverdue ? (
 							<>

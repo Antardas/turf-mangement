@@ -58,6 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		fetchUser();
 
 		const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+			// Handle sign out event immediately
+			if (event === 'SIGNED_OUT' || !session?.user) {
+				setUser(null);
+				return;
+			}
+
 			if (session?.user) {
 				// Use Supabase to fetch user data
 				const { data: userData, error } = await supabase
@@ -86,8 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 				} else {
 					setUser(userData);
 				}
-			} else {
-				setUser(null);
 			}
 		});
 
@@ -183,8 +187,13 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 	};
 
 	const signOut = async () => {
+		// Clear user state immediately
+		setUser(null);
 		const { error } = await supabase.auth.signOut();
-		if (error) throw error;
+		if (error) {
+			// If signOut fails, we might need to restore state, but for now just throw
+			throw error;
+		}
 	};
 
 	return (

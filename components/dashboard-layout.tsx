@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
@@ -28,12 +29,28 @@ const navigation = [
 export function DashboardLayout({ children }: { children: React.ReactNode; }) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { user, signOut } = useAuth();
+	const { user, loading, signOut } = useAuth();
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!loading && !user) {
+			router.push("/login");
+		}
+	}, [user, loading, router]);
 
 	const handleSignOut = async () => {
 		await signOut();
 		router.push("/login");
 	};
+
+	// Show loading or nothing while checking auth
+	if (loading || !user) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-emerald-600" />
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex h-screen bg-zinc-50 dark:bg-zinc-950">

@@ -40,6 +40,17 @@ export default function LoginPage() {
 		}
 	}, [signinSuccess, user, router]);
 
+	// Timeout to check if user was set after signin
+	useEffect(() => {
+		if (signinSuccess && !user) {
+			const timeoutId = setTimeout(() => {
+				setError("Failed to complete sign in. User data not found.");
+				setIsLoading(false);
+			}, 3000);
+			return () => clearTimeout(timeoutId);
+		}
+	}, [signinSuccess, user]);
+
 	const onSubmit = async (data: LoginFormData) => {
 		try {
 			setIsLoading(true);
@@ -47,6 +58,7 @@ export default function LoginPage() {
 			await signIn(data.email, data.password);
 			setSigninSuccess(true);
 		} catch (err: any) {
+			console.error(err);
 			setError(err.message || "Failed to sign in");
 			setIsLoading(false);
 		}

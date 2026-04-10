@@ -130,7 +130,12 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 					.select()
 					.single();
 
-				if (!insertError && newUser) {
+				if (insertError) {
+					console.error("Failed to create user record:", insertError);
+					throw new Error("Failed to create user profile. Please contact support.");
+				}
+
+				if (newUser) {
 					setUser(newUser);
 				}
 			} else {
@@ -177,7 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 					.select()
 					.single();
 
-				if (!insertError && newUser) {
+				if (insertError) {
+					console.error("Failed to create user record:", insertError);
+					throw new Error("Failed to create user profile. Please contact support.");
+				}
+
+				if (newUser) {
 					setUser(newUser);
 				}
 			} else {

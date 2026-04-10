@@ -95,16 +95,48 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 	}, []);
 
 	const signIn = async (email: string, password: string) => {
-		const { error } = await supabase.auth.signInWithPassword({
+		const { data: signInData, error } = await supabase.auth.signInWithPassword({
 			email,
 			password,
 		});
 
 		if (error) throw error;
+
+		// Immediately fetch and set user data after signin
+		if (signInData?.session?.user) {
+			const supabaseUser = signInData.session.user;
+
+			const { data: userData, error: fetchError } = await supabase
+				.from("users")
+				.select("*")
+				.eq("id", supabaseUser.id)
+				.single();
+
+			if (fetchError || !userData) {
+				// User doesn't exist in public.users, create them
+				const { data: newUser, error: insertError } = await supabase
+					.from("users")
+					.insert({
+						id: supabaseUser.id,
+						email: supabaseUser.email || "",
+						name: supabaseUser.user_metadata?.name || supabaseUser.email || "",
+						role: supabaseUser.user_metadata?.role || "customer",
+						phone: supabaseUser.phone || "",
+					})
+					.select()
+					.single();
+
+				if (!insertError && newUser) {
+					setUser(newUser);
+				}
+			} else {
+				setUser(userData);
+			}
+		}
 	};
 
 	const signUp = async (email: string, password: string, name: string, role: UserRole = "customer") => {
-		const { error: signUpError } = await supabase.auth.signUp({
+		const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
 			options: {
@@ -113,6 +145,41 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		});
 
 		if (signUpError) throw signUpError;
+
+		// If signup returns a session (auto-signin when email verification is disabled),
+		// immediately create user record and set user state
+		if (signUpData?.session?.user) {
+			const supabaseUser = signUpData.session.user;
+			const userMetadata = supabaseUser.user_metadata;
+
+			// Check if user exists in public.users table
+			const { data: existingUser, error: fetchError } = await supabase
+				.from("users")
+				.select("*")
+				.eq("id", supabaseUser.id)
+				.single();
+
+			if (fetchError || !existingUser) {
+				// User doesn't exist in public.users, create them
+				const { data: newUser, error: insertError } = await supabase
+					.from("users")
+					.insert({
+						id: supabaseUser.id,
+						email: supabaseUser.email || email,
+						name: name || userMetadata?.name || email,
+						role: role || userMetadata?.role || "customer",
+						phone: supabaseUser.phone || "",
+					})
+					.select()
+					.single();
+
+				if (!insertError && newUser) {
+					setUser(newUser);
+				}
+			} else {
+				setUser(existingUser);
+			}
+		}
 	};
 
 	const signOut = async () => {

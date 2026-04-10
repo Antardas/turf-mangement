@@ -20,49 +20,40 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 
 	useEffect(() => {
 		const fetchUser = async () => {
-			try {
-				const { data: { session } } = await supabase.auth.getSession();
-				console.log("Session:", session);
-				if (session?.user) {
-					// Use Supabase to fetch user data
-					const { data: userData, error } = await supabase
+			const { data: { session } } = await supabase.auth.getSession();
+			console.log("Session:", session);
+			if (session?.user) {
+				// Use Supabase to fetch user data
+				const { data: userData, error } = await supabase
+					.from("users")
+					.select("*")
+					.eq("id", session.user.id)
+					.single();
+
+				if (error || !userData) {
+					// User doesn't exist in public.users, create them
+					const { data: newUser, error: insertError } = await supabase
 						.from("users")
-						.select("*")
-						.eq("id", session.user.id)
+						.insert({
+							id: session.user.id,
+							email: session.user.email || "",
+							name: session.user.user_metadata?.name || session.user.email || "",
+							role: session.user.user_metadata?.role || "customer",
+							phone: session.user.phone || "",
+						})
+						.select()
 						.single();
 
-					if (error || !userData) {
-						// User doesn't exist in public.users, create them
-						const { data: newUser, error: insertError } = await supabase
-							.from("users")
-							.insert({
-								id: session.user.id,
-								email: session.user.email || "",
-								name: session.user.user_metadata?.name || session.user.email || "",
-								role: session.user.user_metadata?.role || "customer",
-								phone: session.user.phone || "",
-							})
-							.select()
-							.single();
-
-						if (!insertError && newUser) {
-							setUser(newUser);
-						}
-					} else {
-						setUser(userData);
+					if (!insertError && newUser) {
+						setUser(newUser);
 					}
+				} else {
+					setUser(userData);
 				}
-			} catch (err) {
-				console.error("Error fetching user:", err);
-			} finally {
-				setLoading(false);
 			}
-		};
 
-		// Add timeout to ensure loading is always cleared
-		const timeoutId = setTimeout(() => {
 			setLoading(false);
-		}, 5000);
+		};
 
 		fetchUser();
 
@@ -106,10 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 			}
 		});
 
-		return () => {
-			clearTimeout(timeoutId);
-			subscription.unsubscribe();
-		};
+		return () => subscription.unsubscribe();
 	}, []);
 
 	const signIn = async (email: string, password: string) => {

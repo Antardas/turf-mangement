@@ -8,6 +8,7 @@ import {
 	LayoutDashboard,
 	Calendar,
 	MapPin,
+	Building,
 	Wrench,
 	Users,
 	BarChart3,
@@ -19,6 +20,7 @@ import {
 const navigation = [
 	{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
 	{ name: "Fields", href: "/fields", icon: MapPin },
+	{ name: "Locations", href: "/locations", icon: Building },
 	{ name: "Bookings", href: "/bookings", icon: Calendar },
 	{ name: "Maintenance", href: "/maintenance", icon: Wrench },
 	{ name: "Users", href: "/users", icon: Users },

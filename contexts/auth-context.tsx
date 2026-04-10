@@ -101,10 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		});
 
 		if (error) throw error;
-
+		console.log(signInData);
 		// Immediately fetch and set user data after signin
-		if (signInData?.session?.user) {
-			const supabaseUser = signInData.session.user;
+		if (signInData.user) {
+			const supabaseUser = signInData.user;
 
 			const { data: userData, error: fetchError } = await supabase
 				.from("users")
@@ -145,11 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		});
 
 		if (signUpError) throw signUpError;
-
+		console.log(signUpData);
 		// If signup returns a session (auto-signin when email verification is disabled),
 		// immediately create user record and set user state
-		if (signUpData?.session?.user) {
-			const supabaseUser = signUpData.session.user;
+		if (signUpData.user) {
+			const supabaseUser = signUpData.user;
 			const userMetadata = supabaseUser.user_metadata;
 
 			// Check if user exists in public.users table

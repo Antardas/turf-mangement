@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 	useEffect(() => {
 		const fetchUser = async () => {
 			const { data: { session } } = await supabase.auth.getSession();
-
+			console.log("Session:", session);
 			if (session?.user) {
 				// Use Supabase to fetch user data
 				const { data: userData, error } = await supabase
@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		fetchUser();
 
 		const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+			console.log("Auth state changed:", event, session);
 			// Handle sign out event immediately
 			if (event === 'SIGNED_OUT' || !session?.user) {
 				setUser(null);
@@ -71,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 					.select("*")
 					.eq("id", session.user.id)
 					.single();
-
+				console.log("User data:", userData);
+				console.log("Error:", error);
 				if (error || !userData) {
 					// User doesn't exist in public.users, create them
 					const { data: newUser, error: insertError } = await supabase

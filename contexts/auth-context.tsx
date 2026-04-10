@@ -24,13 +24,32 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 
 			if (session?.user) {
 				// Use Supabase to fetch user data
-				const { data: userData } = await supabase
+				const { data: userData, error } = await supabase
 					.from("users")
 					.select("*")
 					.eq("id", session.user.id)
 					.single();
 
-				setUser(userData);
+				if (error || !userData) {
+					// User doesn't exist in public.users, create them
+					const { data: newUser, error: insertError } = await supabase
+						.from("users")
+						.insert({
+							id: session.user.id,
+							email: session.user.email || "",
+							name: session.user.user_metadata?.name || session.user.email || "",
+							role: session.user.user_metadata?.role || "customer",
+							phone: session.user.phone || "",
+						})
+						.select()
+						.single();
+
+					if (!insertError && newUser) {
+						setUser(newUser);
+					}
+				} else {
+					setUser(userData);
+				}
 			}
 
 			setLoading(false);
@@ -41,13 +60,32 @@ export function AuthProvider({ children }: { children: ReactNode; }) {
 		const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
 			if (session?.user) {
 				// Use Supabase to fetch user data
-				const { data: userData } = await supabase
+				const { data: userData, error } = await supabase
 					.from("users")
 					.select("*")
 					.eq("id", session.user.id)
 					.single();
 
-				setUser(userData);
+				if (error || !userData) {
+					// User doesn't exist in public.users, create them
+					const { data: newUser, error: insertError } = await supabase
+						.from("users")
+						.insert({
+							id: session.user.id,
+							email: session.user.email || "",
+							name: session.user.user_metadata?.name || session.user.email || "",
+							role: session.user.user_metadata?.role || "customer",
+							phone: session.user.phone || "",
+						})
+						.select()
+						.single();
+
+					if (!insertError && newUser) {
+						setUser(newUser);
+					}
+				} else {
+					setUser(userData);
+				}
 			} else {
 				setUser(null);
 			}

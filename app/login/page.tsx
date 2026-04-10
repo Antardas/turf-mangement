@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -23,6 +23,7 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [signinSuccess, setSigninSuccess] = useState(false);
 
 	const {
 		register,
@@ -32,27 +33,21 @@ export default function LoginPage() {
 		resolver: zodResolver(loginSchema),
 	});
 
+	// Redirect to dashboard when user is set after successful signin
+	useEffect(() => {
+		if (signinSuccess && user) {
+			router.push("/dashboard");
+		}
+	}, [signinSuccess, user, router]);
+
 	const onSubmit = async (data: LoginFormData) => {
 		try {
 			setIsLoading(true);
 			setError("");
 			await signIn(data.email, data.password);
-
-			// Wait for user to be set in auth context
-			let attempts = 0;
-			while (!user && attempts < 10) {
-				await new Promise(resolve => setTimeout(resolve, 200));
-				attempts++;
-			}
-
-			if (user) {
-				router.push("/dashboard");
-			} else {
-				setError("Failed to complete sign in. Please try again.");
-			}
+			setSigninSuccess(true);
 		} catch (err: any) {
 			setError(err.message || "Failed to sign in");
-		} finally {
 			setIsLoading(false);
 		}
 	};

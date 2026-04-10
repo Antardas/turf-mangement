@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,6 +30,7 @@ export default function RegisterPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [signupSuccess, setSignupSuccess] = useState(false);
 
 	const {
 		register,
@@ -42,27 +43,21 @@ export default function RegisterPage() {
 		},
 	});
 
+	// Redirect to dashboard when user is set after successful signup
+	useEffect(() => {
+		if (signupSuccess && user) {
+			router.push("/dashboard");
+		}
+	}, [signupSuccess, user, router]);
+
 	const onSubmit = async (data: RegisterFormData) => {
 		try {
 			setIsLoading(true);
 			setError("");
 			await signUp(data.email, data.password, data.name, data.role);
-
-			// Wait for user to be set in auth context
-			let attempts = 0;
-			while (!user && attempts < 10) {
-				await new Promise(resolve => setTimeout(resolve, 200));
-				attempts++;
-			}
-
-			if (user) {
-				router.push("/dashboard");
-			} else {
-				setError("Failed to complete signup. Please try logging in.");
-			}
+			setSignupSuccess(true);
 		} catch (err: any) {
 			setError(err.message || "Failed to create account");
-		} finally {
 			setIsLoading(false);
 		}
 	};
